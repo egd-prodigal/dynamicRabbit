@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @AutoConfiguration(after = DynamicRabbitCoreConfiguration.class)
 @Configuration
+@EnableScheduling
 public class DynamicRabbitListenerConfiguration {
 
     private final Logger logger = LoggerFactory.getLogger(DynamicRabbitListenerConfiguration.class);

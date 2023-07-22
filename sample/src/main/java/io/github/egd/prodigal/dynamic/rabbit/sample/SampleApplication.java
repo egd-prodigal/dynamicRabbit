@@ -1,9 +1,12 @@
 package io.github.egd.prodigal.dynamic.rabbit.sample;
 
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class SampleApplication {
 
     public static void main(String[] args) {

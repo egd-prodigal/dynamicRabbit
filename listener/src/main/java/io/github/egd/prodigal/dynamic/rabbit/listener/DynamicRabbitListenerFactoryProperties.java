@@ -1,5 +1,6 @@
 package io.github.egd.prodigal.dynamic.rabbit.listener;
 
+import java.util.HashSet;
 import java.util.List;
 
 public class DynamicRabbitListenerFactoryProperties {
@@ -102,5 +103,31 @@ public class DynamicRabbitListenerFactoryProperties {
 
     public void setReceiveTimeout(long receiveTimeout) {
         this.receiveTimeout = receiveTimeout;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof DynamicRabbitListenerFactoryProperties) {
+            DynamicRabbitListenerFactoryProperties compareObj = (DynamicRabbitListenerFactoryProperties) obj;
+            boolean othersEquals = this.getId().equals(compareObj.getId()) && this.getGroup().equals(compareObj.getGroup())
+                    && this.getConcurrentConsumers() == compareObj.getConcurrentConsumers()
+                    && this.getMaxConcurrentConsumers() == compareObj.getMaxConcurrentConsumers()
+                    && this.getPrefetchCount() == compareObj.getPrefetchCount()
+                    && this.isBatchListener() == compareObj.isBatchListener()
+                    && this.getBatchSize() == compareObj.getBatchSize()
+                    && this.isConsumerBatchEnabled() == compareObj.isConsumerBatchEnabled()
+                    && this.getReceiveTimeout() == compareObj.getReceiveTimeout();
+            if (!othersEquals) {
+                return false;
+            } else {
+                if (this.getQueueNames().size() != compareObj.getQueueNames().size()) {
+                    return false;
+                }
+                return new HashSet<>(compareObj.getQueueNames()).containsAll(this.getQueueNames())
+                        && new HashSet<>(this.getQueueNames()).containsAll(compareObj.getQueueNames());
+            }
+        } else {
+            return false;
+        }
     }
 }

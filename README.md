@@ -1,0 +1,2 @@
+# dynamicRabbit
+dynamic rabbit listener

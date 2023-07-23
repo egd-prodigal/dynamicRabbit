@@ -4,8 +4,6 @@ import com.rabbitmq.client.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AcknowledgeMode;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -25,7 +23,6 @@ import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -72,7 +69,7 @@ public class DynamicRabbitListenerConfigurer implements RabbitListenerConfigurer
         this.defaultMessageHandlerMethodFactory.setArgumentResolvers(messageMethodArgumentResolverList);
         this.dynamicRabbitAmqpMessageConverter = new DynamicRabbitAmqpMessageConverter();
         try {
-            consumeMethod = getClass().getMethod("consume", org.springframework.messaging.Message.class, Channel.class);
+            consumeMethod = getClass().getMethod("consume");
         } catch (NoSuchMethodException e) {
             logger.error("", e);
             throw new RuntimeException(e);
@@ -116,7 +113,7 @@ public class DynamicRabbitListenerConfigurer implements RabbitListenerConfigurer
     }
 
     private void registerEndpoint(DynamicRabbitListenerFactoryProperties dynamicRabbitListenerFactoryProperty) {
-        DynamicRabbitMethodRabbitListenerEndpoint rabbitListenerEndpoint = new DynamicRabbitMethodRabbitListenerEndpoint();
+        DynamicRabbitMethodRabbitListenerEndpoint rabbitListenerEndpoint = new DynamicRabbitMethodRabbitListenerEndpoint(applicationContext);
         rabbitListenerEndpoint.setId(dynamicRabbitListenerFactoryProperty.getId());
         rabbitListenerEndpoint.setGroup(dynamicRabbitListenerFactoryProperty.getGroup());
         rabbitListenerEndpoint.setAutoStartup(true);
@@ -153,19 +150,11 @@ public class DynamicRabbitListenerConfigurer implements RabbitListenerConfigurer
     }
 
     /**
-     * 消费消息，是所有消息监听的入口方法
+     * 消费消息，空方法，仅用于注册endpoint，实际不调用本方法消费
      *
-     * @param message 消息，包含一个消息集合
-     * @param channel rabbitmq连接channel
+     * @see DynamicRabbitBatchMessagingListener#onMessageBatch(List, Channel)
      */
-    public void consume(org.springframework.messaging.Message<List<Message>> message, Channel channel) {
-        List<Message> messages = message.getPayload();
-        logger.info("consume message, size: {}", messages.size());
-        for (Message amqpMessage : messages) {
-            MessageProperties messageProperties = amqpMessage.getMessageProperties();
-            long deliveryTag = messageProperties.getDeliveryTag();
-            this.basicAckQuietly(deliveryTag, channel);
-        }
+    public void consume() {
     }
 
     private void stopMessageListener(String id) {
@@ -181,18 +170,10 @@ public class DynamicRabbitListenerConfigurer implements RabbitListenerConfigurer
         this.dynamicRabbitListenerFactoryPropertiesMap.remove(id);
     }
 
-    private void basicAckQuietly(long deliveryTag, Channel channel) {
-        try {
-            channel.basicAck(deliveryTag, false);
-        } catch (IOException e) {
-            logger.error("", e);
-        }
-    }
-
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         Environment environment = this.applicationContext.getEnvironment();
-        String cron = environment.getProperty("dynamic.rabbit.refresh.cron", "0 0/1 * * * ?");
+        String cron = environment.getProperty("dynamic.rabbit.refresh.cron", "0 0/5 * * * ?");
         taskRegistrar.addCronTask(this::registerEndpoints, cron);
     }
 

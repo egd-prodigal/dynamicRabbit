@@ -15,6 +15,8 @@ public class SampleRabbitListenerFactoryLoader implements DynamicRabbitListenerF
         properties.setGroup("default");
         properties.setId("demo-endpoint");
         properties.setQueueNames(Collections.singletonList("demo_queue"));
+        properties.setBatchSize(10);
+        properties.setReceiveTimeout(1000L);
         return Collections.singletonList(properties);
     }
 

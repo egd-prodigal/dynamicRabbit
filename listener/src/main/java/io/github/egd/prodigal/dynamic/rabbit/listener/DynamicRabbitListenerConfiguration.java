@@ -4,7 +4,11 @@ import com.rabbitmq.client.ConnectionFactory;
 import io.github.egd.prodigal.dynamic.rabbit.core.DynamicRabbitCoreConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.batch.BatchingStrategy;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.listener.api.RabbitListenerErrorHandler;
+import org.springframework.amqp.rabbit.support.ListenerExecutionFailedException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,8 +17,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,6 +74,34 @@ public class DynamicRabbitListenerConfiguration {
                                                                            @Autowired @Qualifier("dynamicRabbitConsumerCachingConnectionFactory") CachingConnectionFactory dynamicRabbitConsumerCachingConnectionFactory) {
         return new DynamicRabbitListenerConfigurer(applicationContext, beanFactory, applicationEventPublisher,
                 dynamicRabbitListenerFactoryLoaderMap, dynamicRabbitConsumerCachingConnectionFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public DynamicRabbitBatchMessagingListener dynamicRabbitBatchMessagingListener(@Autowired(required = false) String id,
+                                                                                   @Autowired(required = false) String group,
+                                                                                   @Autowired(required = false) Collection<String> queueNames,
+                                                                                   @Autowired(required = false) Object bean,
+                                                                                   @Autowired(required = false) Method method,
+                                                                                   @Autowired(required = false) BatchingStrategy batchingStrategy,
+                                                                                   @Autowired(required = false) List<DynamicRabbitCustomBatchListener> dynamicRabbitCustomBatchListeners) {
+        logger.info("create dynamicRabbitBatchMessagingListener, id: {}, group: {}, queueNames: {}", id, group, queueNames);
+        return new DynamicRabbitBatchMessagingListener(bean, method, true,
+                dynamicLoggingRabbitListenerErrorHandler(), batchingStrategy, dynamicRabbitCustomBatchListeners);
+    }
+
+    @Bean
+    public RabbitListenerErrorHandler dynamicLoggingRabbitListenerErrorHandler() {
+        return new RabbitListenerErrorHandler() {
+
+            private final Logger logger = LoggerFactory.getLogger("logging.rabbit.listener.error.handler");
+
+            @Override
+            public Object handleError(Message message, org.springframework.messaging.Message<?> message1, ListenerExecutionFailedException e) throws Exception {
+                logger.error("", e);
+                return null;
+            }
+        };
     }
 
 }

@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -16,7 +16,12 @@ public class SampleDynamicRabbitCustomBatchListener extends DynamicRabbitCustomB
 
     @Override
     protected List<String> supportedQueueNames() {
-        return Collections.singletonList("demo_queue");
+        List<String> list = new ArrayList<>();
+        list.add("demo_queue");
+        list.add("demo1");
+        list.add("demo2");
+        list.add("demo3");
+        return list;
     }
 
 
@@ -24,7 +29,8 @@ public class SampleDynamicRabbitCustomBatchListener extends DynamicRabbitCustomB
     public void consume(List<Message> messages) {
         for (Message message : messages) {
             byte[] body = message.getBody();
-            logger.info("message: {}", new String(body));
+            String consumerQueue = message.getMessageProperties().getConsumerQueue();
+            logger.info("queue: {}, message: {}", consumerQueue, new String(body));
         }
     }
 

@@ -10,6 +10,8 @@ import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
+import java.util.UUID;
+
 public class ProducerTest {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -46,8 +48,10 @@ public class ProducerTest {
     @Test
     public void send() {
         logger.info("rabbitTemplate: {}", rabbitTemplate);
-        Message message = new Message("123".getBytes(), new MessageProperties());
-        rabbitTemplate.convertAndSend("demo_exchange", "demo_binding", message);
+        for (int i = 0; i < 5; i++) {
+            Message message = new Message(UUID.randomUUID().toString().getBytes(), new MessageProperties());
+            rabbitTemplate.convertAndSend("demo_exchange", "demo_binding", message);
+        }
     }
 
 }

@@ -13,6 +13,7 @@
         <module>core</module>
         <module>dispatcher</module>
         <module>router</module>
+        <module>provider1</module>
     </modules>
 
     <packaging>pom</packaging>

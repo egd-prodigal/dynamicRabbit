@@ -1,4 +1,4 @@
-package io.github.egd.prodigal.dynamic.rabbit.sample;
+package io.github.egd.prodigal.dynamic.rabbit.router.core;
 
 import org.springframework.core.serializer.DefaultDeserializer;
 import org.springframework.core.serializer.Deserializer;

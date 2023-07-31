@@ -12,13 +12,14 @@ import org.springframework.amqp.rabbit.support.ListenerExecutionFailedException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
+import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.lang.reflect.Method;
@@ -28,8 +29,8 @@ import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@AutoConfiguration(after = DynamicRabbitCoreConfiguration.class)
 @Configuration
+@AutoConfigureAfter(DynamicRabbitCoreConfiguration.class)
 @EnableScheduling
 public class DynamicRabbitListenerConfiguration {
 
@@ -49,7 +50,7 @@ public class DynamicRabbitListenerConfiguration {
             private final AtomicInteger i = new AtomicInteger();
 
             @Override
-            public Thread newThread(Runnable r) {
+            public Thread newThread(@NonNull Runnable r) {
                 return new Thread(r, "dr-ccf-" + i.incrementAndGet());
             }
         });

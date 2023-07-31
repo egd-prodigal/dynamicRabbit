@@ -1,7 +1,8 @@
-package io.github.egd.prodigal.dynamic.rabbit.sample;
+package io.github.egd.prodigal.sample.provider1;
 
+import io.github.egd.prodigal.dynamic.rabbit.router.core.ByteArrayDeserializer;
 import io.github.egd.prodigal.dynamic.rabbit.router.core.MessageParamArgumentResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.github.egd.prodigal.dynamic.rabbit.router.core.StringDeserializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.serializer.DefaultDeserializer;
@@ -11,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 import java.util.List;
 
 @Configuration
-public class SampleConfig extends WebMvcConfigurationSupport {
+public class Provider1WebConfig extends WebMvcConfigurationSupport {
 
     @Bean
     public MessageParamArgumentResolver messageParamArgumentResolver() {
@@ -21,6 +22,16 @@ public class SampleConfig extends WebMvcConfigurationSupport {
     @Bean
     public DefaultDeserializer defaultDeserializer() {
         return new DefaultDeserializer();
+    }
+
+    @Bean
+    public StringDeserializer stringDeserializer() {
+        return new StringDeserializer();
+    }
+
+    @Bean
+    public ByteArrayDeserializer byteArrayDeserializer() {
+        return new ByteArrayDeserializer();
     }
 
     @Override

@@ -1,24 +1,21 @@
-package io.github.egd.prodigal.dynamic.rabbit.sample;
+package io.github.egd.prodigal.dynamic.rabbit.router.core;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.serializer.Deserializer;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component
 public class ByteArrayDeserializer implements Deserializer<byte[]> {
 
-    @NotNull
+    @NonNull
     @Override
-    public byte[] deserialize(@NotNull InputStream inputStream) throws IOException {
+    public byte[] deserialize(@NonNull InputStream inputStream) throws IOException {
         return StreamUtils.copyToByteArray(inputStream);
     }
 
-    @NotNull
+    @NonNull
     @Override
     public byte[] deserializeFromByteArray(@NonNull byte[] serialized) throws IOException {
         return serialized;

@@ -1,12 +1,11 @@
-package io.github.egd.prodigal.dynamic.rabbit.sample;
+package io.github.egd.prodigal.dynamic.rabbit.router.core;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.serializer.Deserializer;
-import org.springframework.stereotype.Component;
+import org.springframework.lang.NonNull;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -21,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class MessageParamArgumentResolver implements HandlerMethodArgumentResolver, ApplicationContextAware {
 
     private final Map<Class<?>, Deserializer<?>> deserializerMap = new HashMap<>();
@@ -34,7 +32,7 @@ public class MessageParamArgumentResolver implements HandlerMethodArgumentResolv
     }
 
     @Override
-    public Object resolveArgument(@NotNull MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+    public Object resolveArgument(@NonNull MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         HttpServletRequest httpServletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
         if (httpServletRequest == null) {
             return new ArrayList<>(0);
@@ -73,7 +71,7 @@ public class MessageParamArgumentResolver implements HandlerMethodArgumentResolv
 
 
     @Override
-    public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 

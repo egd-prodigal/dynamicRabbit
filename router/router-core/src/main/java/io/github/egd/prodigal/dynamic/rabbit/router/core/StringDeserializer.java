@@ -1,26 +1,24 @@
-package io.github.egd.prodigal.dynamic.rabbit.sample;
+package io.github.egd.prodigal.dynamic.rabbit.router.core;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.serializer.Deserializer;
-import org.springframework.stereotype.Component;
+import org.springframework.lang.NonNull;
 import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-@Component
 public class StringDeserializer implements Deserializer<String> {
 
-    @NotNull
+    @NonNull
     @Override
-    public String deserialize(@NotNull InputStream inputStream) throws IOException {
+    public String deserialize(@NonNull InputStream inputStream) throws IOException {
         return StreamUtils.copyToString(inputStream, Charset.defaultCharset());
     }
 
-    @NotNull
+    @NonNull
     @Override
-    public String deserializeFromByteArray(@NotNull byte[] serialized) throws IOException {
+    public String deserializeFromByteArray(@NonNull byte[] serialized) throws IOException {
         return new String(serialized, Charset.defaultCharset());
     }
 

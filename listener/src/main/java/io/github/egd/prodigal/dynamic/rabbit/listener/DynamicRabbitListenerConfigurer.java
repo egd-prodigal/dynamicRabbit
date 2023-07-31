@@ -172,9 +172,9 @@ public class DynamicRabbitListenerConfigurer implements RabbitListenerConfigurer
 
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-        Environment environment = this.applicationContext.getEnvironment();
-        String cron = environment.getProperty("dynamic.rabbit.refresh.cron", "0 0/1 * * * ?");
-        taskRegistrar.addCronTask(this::registerEndpoints, cron);
+//        Environment environment = this.applicationContext.getEnvironment();
+//        String cron = environment.getProperty("dynamic.rabbit.refresh.cron", "0 0/1 * * * ?");
+//        taskRegistrar.addCronTask(this::registerEndpoints, cron);
     }
 
 }

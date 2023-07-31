@@ -1,5 +1,6 @@
 package io.github.egd.prodigal.dynamic.rabbit.listener;
 
+import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 
@@ -11,6 +12,6 @@ public interface DynamicRabbitCustomBatchListener {
 
     boolean supportMessageProperties(MessageProperties messageProperties);
 
-    void consume(List<Message> messages);
+    void consume(List<Message> messages, Channel channel);
 
 }

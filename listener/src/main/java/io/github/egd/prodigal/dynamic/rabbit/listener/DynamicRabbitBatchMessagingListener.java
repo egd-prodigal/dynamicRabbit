@@ -32,14 +32,14 @@ public class DynamicRabbitBatchMessagingListener extends BatchMessagingMessageLi
         String consumerQueue = messages.get(0).getMessageProperties().getConsumerQueue();
         this.dynamicRabbitCustomBatchListeners.stream().filter(listener -> listener.canConsumeQueue(consumerQueue)).forEach(listener -> {
             try {
-                listener.consume(messages.stream().filter(message -> listener.supportMessageProperties(message.getMessageProperties())).collect(Collectors.toList()));
+                listener.consume(messages.stream().filter(message -> listener.supportMessageProperties(message.getMessageProperties())).collect(Collectors.toList()), channel);
             } catch (Exception e) {
                 logger.error("", e);
             }
         });
-        for (Message message : messages) {
-            this.basicAckQuietly(message.getMessageProperties().getDeliveryTag(), channel);
-        }
+//        for (Message message : messages) {
+//            this.basicAckQuietly(message.getMessageProperties().getDeliveryTag(), channel);
+//        }
     }
 
     private void basicAckQuietly(long deliveryTag, Channel channel) {

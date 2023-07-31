@@ -1,5 +1,6 @@
 package io.github.egd.prodigal.dynamic.rabbit.dispatcher;
 
+import com.rabbitmq.client.Channel;
 import io.github.egd.prodigal.dynamic.rabbit.listener.DynamicRabbitCustomBatchListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ public class DynamicRabbitCustomBatchListenerDispatcher implements DynamicRabbit
     }
 
     @Override
-    public void consume(List<Message> messages) {
+    public void consume(List<Message> messages, Channel channel) {
         logger.info("dispatch messages, size: {}", messages.size());
     }
 

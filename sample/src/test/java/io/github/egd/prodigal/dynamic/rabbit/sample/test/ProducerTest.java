@@ -1,5 +1,6 @@
 package io.github.egd.prodigal.dynamic.rabbit.sample.test;
 
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.ConnectionFactory;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -11,6 +12,10 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class ProducerTest {
 
@@ -47,11 +52,36 @@ public class ProducerTest {
 
     @Test
     public void send() {
+        ExecutorService threadPool = Executors.newFixedThreadPool(16);
         logger.info("rabbitTemplate: {}", rabbitTemplate);
-        for (int i = 0; i < 5; i++) {
-            Message message = new Message(UUID.randomUUID().toString().getBytes(), new MessageProperties());
-            rabbitTemplate.convertAndSend("demo_exchange", "demo_binding", message);
+        int count = 100000;
+        CountDownLatch countDownLatch = new CountDownLatch(count);
+        for (int i = 0; i < count; i++) {
+            final String id = (i + 1) + "";
+            threadPool.execute(() -> {
+                try {
+                    Message message = new Message(id.getBytes(), new MessageProperties());
+//                    rabbitTemplate.convertAndSend("demo_exchange", "demo_binding", message);
+                    rabbitTemplate.execute(channel -> {
+                        channel.txSelect();
+                        channel.basicPublish("demo_exchange", "demo_binding", new AMQP.BasicProperties(), id.getBytes());
+                        channel.txCommit();
+                        return null;
+                    });
+                    TimeUnit.MILLISECONDS.sleep(1);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
         }
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        threadPool.shutdown();
     }
 
 }

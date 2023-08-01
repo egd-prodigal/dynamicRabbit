@@ -52,7 +52,7 @@ public class ProducerTest {
     @Test
     public void send() {
         logger.info("rabbitTemplate: {}", rabbitTemplate);
-        for (int i = 0; i < 500; i++) {
+        for (int i = 0; i < 1000000; i++) {
             MessageProperties messageProperties = new MessageProperties();
             messageProperties.setHeader(RouterConstants.HEADER_SERVICE_ID, "PROVIDER1");
             messageProperties.setHeader(RouterConstants.HEADER_SERVICE_URL, "/demo/provider");

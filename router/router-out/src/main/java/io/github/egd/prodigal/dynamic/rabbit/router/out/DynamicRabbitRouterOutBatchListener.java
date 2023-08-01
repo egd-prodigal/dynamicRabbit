@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -46,12 +47,16 @@ public class DynamicRabbitRouterOutBatchListener implements DynamicRabbitCustomB
     }
 
     @Override
+    @RabbitListener(queues = "router-out-retry", group = "router-out", containerFactory = "retryRabbitListenerContainerFactory")
     public void consume(List<Message> messages) {
         Map<String, Map<String, List<byte[]>>> map = new HashMap<>();
         for (Message message : messages) {
             MessageProperties messageProperties = message.getMessageProperties();
             String serviceId = messageProperties.getHeader(RouterConstants.HEADER_SERVICE_ID);
             String serviceUrl = messageProperties.getHeader(RouterConstants.HEADER_SERVICE_URL);
+            if (serviceId == null || "".equals(serviceId) || serviceUrl == null || "".equals(serviceUrl)) {
+                continue;
+            }
             if (!serviceUrl.startsWith("/")) {
                 serviceUrl = "/" + serviceUrl;
             }
@@ -60,30 +65,30 @@ public class DynamicRabbitRouterOutBatchListener implements DynamicRabbitCustomB
             serviceIdMap.putIfAbsent(serviceUrl, new ArrayList<>());
             serviceIdMap.get(serviceUrl).add(message.getBody());
         }
-        map.forEach((serviceId, m) -> {
-            m.forEach((serviceUrl, bytesList) -> {
-                try {
-                    restTemplate.execute("http://" + serviceId + serviceUrl, HttpMethod.POST, request -> {
-                        OutputStream outputStream = request.getBody();
-                        try (DataOutputStream dos = new DataOutputStream(outputStream)) {
-                            for (byte[] bytes : bytesList) {
-                                dos.writeInt(bytes.length);
-                                dos.write(bytes);
+        map.forEach((serviceId, m) ->
+                m.forEach((serviceUrl, bytesList) -> {
+                    try {
+                        logger.info("routing, serviceId: {}, serviceUrl: {}, message size: {}", serviceId, serviceUrl, bytesList.size());
+                        restTemplate.execute("http://" + serviceId + serviceUrl, HttpMethod.POST, request -> {
+                            OutputStream outputStream = request.getBody();
+                            try (DataOutputStream dos = new DataOutputStream(outputStream)) {
+                                for (byte[] bytes : bytesList) {
+                                    dos.writeInt(bytes.length);
+                                    dos.write(bytes);
+                                }
                             }
-                        }
-                    }, response -> {
-                        HttpStatus statusCode = response.getStatusCode();
-                        if (!statusCode.is2xxSuccessful()) {
-                            dynamicRabbitRouterOutResend.resend("", "", serviceId, serviceUrl, bytesList);
-                        }
-                        return StreamUtils.copyToByteArray(response.getBody());
-                    });
-                } catch (Exception e) {
-                    logger.error("", e);
-                    dynamicRabbitRouterOutResend.resend("", "", serviceId, serviceUrl, bytesList);
-                }
-            });
-        });
+                        }, response -> {
+                            HttpStatus statusCode = response.getStatusCode();
+                            if (!statusCode.is2xxSuccessful()) {
+                                dynamicRabbitRouterOutResend.resend("router-out", "retry-routing", serviceId, serviceUrl, bytesList);
+                            }
+                            return StreamUtils.copyToByteArray(response.getBody());
+                        });
+                    } catch (Exception e) {
+                        logger.error("", e);
+                        dynamicRabbitRouterOutResend.resend("router-out", "retry-routing", serviceId, serviceUrl, bytesList);
+                    }
+                }));
     }
 
 }

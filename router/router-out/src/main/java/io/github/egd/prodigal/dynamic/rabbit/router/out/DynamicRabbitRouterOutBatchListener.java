@@ -2,9 +2,12 @@ package io.github.egd.prodigal.dynamic.rabbit.router.out;
 
 import io.github.egd.prodigal.dynamic.rabbit.listener.DynamicRabbitCustomBatchListener;
 import io.github.egd.prodigal.dynamic.rabbit.router.core.RouterConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestTemplate;
@@ -19,10 +22,15 @@ import java.util.Map;
 @Component
 public class DynamicRabbitRouterOutBatchListener implements DynamicRabbitCustomBatchListener {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final RestTemplate restTemplate;
 
-    public DynamicRabbitRouterOutBatchListener(RestTemplate restTemplate) {
+    private final DynamicRabbitRouterOutResend dynamicRabbitRouterOutResend;
+
+    public DynamicRabbitRouterOutBatchListener(RestTemplate restTemplate, DynamicRabbitRouterOutResend dynamicRabbitRouterOutResend) {
         this.restTemplate = restTemplate;
+        this.dynamicRabbitRouterOutResend = dynamicRabbitRouterOutResend;
     }
 
     @Override
@@ -44,13 +52,17 @@ public class DynamicRabbitRouterOutBatchListener implements DynamicRabbitCustomB
             MessageProperties messageProperties = message.getMessageProperties();
             String serviceId = messageProperties.getHeader(RouterConstants.HEADER_SERVICE_ID);
             String serviceUrl = messageProperties.getHeader(RouterConstants.HEADER_SERVICE_URL);
+            if (!serviceUrl.startsWith("/")) {
+                serviceUrl = "/" + serviceUrl;
+            }
             map.putIfAbsent(serviceId, new HashMap<>());
             Map<String, List<byte[]>> serviceIdMap = map.get(serviceId);
             serviceIdMap.putIfAbsent(serviceUrl, new ArrayList<>());
             serviceIdMap.get(serviceUrl).add(message.getBody());
         }
         map.forEach((serviceId, m) -> {
-            m.forEach((serviceUrl, bytesList) ->
+            m.forEach((serviceUrl, bytesList) -> {
+                try {
                     restTemplate.execute("http://" + serviceId + serviceUrl, HttpMethod.POST, request -> {
                         OutputStream outputStream = request.getBody();
                         try (DataOutputStream dos = new DataOutputStream(outputStream)) {
@@ -59,7 +71,18 @@ public class DynamicRabbitRouterOutBatchListener implements DynamicRabbitCustomB
                                 dos.write(bytes);
                             }
                         }
-                    }, response -> StreamUtils.copyToByteArray(response.getBody())));
+                    }, response -> {
+                        HttpStatus statusCode = response.getStatusCode();
+                        if (!statusCode.is2xxSuccessful()) {
+                            dynamicRabbitRouterOutResend.resend("", "", serviceId, serviceUrl, bytesList);
+                        }
+                        return StreamUtils.copyToByteArray(response.getBody());
+                    });
+                } catch (Exception e) {
+                    logger.error("", e);
+                    dynamicRabbitRouterOutResend.resend("", "", serviceId, serviceUrl, bytesList);
+                }
+            });
         });
     }
 

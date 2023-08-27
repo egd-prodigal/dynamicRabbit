@@ -12,11 +12,13 @@ public class RouterInTest {
     public void batchSend() {
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "256");
         RestTemplate restTemplate = new RestTemplate();
-        IntStream.range(0, 10).parallel().forEach(i -> {
+        long start = System.currentTimeMillis();
+        IntStream.range(0, 1000).parallel().forEach(i -> {
             ResponseEntity<Byte> responseEntity = restTemplate.postForEntity("http://localhost:8007/demo_exchange/demo_binding", "abc", Byte.class);
             Byte body = responseEntity.getBody();
             System.out.println(body);
         });
+        System.out.println("elapse: " + (System.currentTimeMillis() - start));
     }
 
 }

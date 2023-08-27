@@ -30,7 +30,7 @@ public class DynamicRabbitRouterInConfig extends WebMvcConfigurationSupport {
 
     @Bean("holderExecutor")
     public ThreadPoolExecutor holderExecutor() {
-        return new ThreadPoolExecutor(64, 2048,
+        return new ThreadPoolExecutor(64, 8192,
                 300, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
                 new ThreadFactory() {
